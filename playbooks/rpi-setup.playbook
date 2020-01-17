@@ -1,0 +1,52 @@
+---
+- name: Configure System Settings
+  hosts: rpi-nodes
+  remote_user: pi
+  become_method: sudo
+  become_user: root
+
+  tasks:
+
+  - name: Set lcd_rotate=1 for 7" Touch Screen
+    become: true
+    ini_file:
+      path: /boot/config.txt
+      section: all
+      option: lcd_rotate
+      value: 2
+      no_extra_spaces: 1
+
+  - name: Enable 256MB VRAM
+    become: true
+    ini_file:
+      path: /boot/config.txt
+      section: all
+      option: gpu_mem
+      value: 256
+      no_extra_spaces: 1
+
+  - name: Enable Serial UART
+    become: true
+    ini_file:
+      path: /boot/config.txt
+      section: all
+      option: enable_uart
+      value: 1
+      no_extra_spaces: 1
+
+  - name: Disable X11
+    become: true
+    ini_file:
+      path: /boot/config.txt
+      section: all
+      option: start_x
+      value: 0
+      no_extra_spaces: 1
+
+  - name: Enable Kernel Boot Console
+    become: true
+    replace:
+      path: /boot/cmdline.txt
+      regexp: ' quiet '
+      replace: ' '
+      backup: yes

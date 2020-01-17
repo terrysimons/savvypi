@@ -1,0 +1,10 @@
+node01.local
+
+[rpi4-aarch64-nodes]
+node01.local
+
+[rpi-nodes]
+node01.local
+
+[rpi-fanshim-nodes]
+node01.local

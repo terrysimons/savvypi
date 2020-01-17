@@ -1,0 +1,30 @@
+---
+# https://learn.pimoroni.com/tutorial/sandyj/getting-started-with-fan-shim
+- name: Configure Pimoroni Fan SHIM
+  hosts: rpi-fanshim-nodes
+  remote_user: pi
+  become_method: sudo
+  become_user: root
+
+  vars:
+    fanshim_repo: https://github.com/pimoroni/fanshim-python
+    fanshim_dir: /home/pi/fanshim-python
+
+  tasks:
+
+  - name: Checkout Pimoroni Fan SHIM Source
+    git:
+      dest: "{{ fanshim_dir }}"
+      repo: "{{ fanshim_repo }}"
+
+  - name: Install Pimoroni Fan SHIM Module
+    become: true
+    shell:
+      chdir: "{{ fanshim_dir }}"
+      cmd: ./install.sh
+
+  - name: Enable Fan SHIM Service
+    become: true
+    shell:
+      chdir: "{{ fanshim_dir}}/examples"
+      cmd: ./install-service.sh --on-threshold 65 --off-threshold 55 --delay 2 --preempt

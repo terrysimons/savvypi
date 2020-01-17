@@ -1,0 +1,121 @@
+---
+- name: Install 64-bit Kernel
+  hosts: rpi4-aarch64-nodes
+  remote_user: pi
+  become_method: sudo
+  become_user: root
+
+  vars:
+    arm_freq: 2000
+    over_voltage: 6
+
+  tasks:
+  
+  - name: Set [rpi4] arm_64bit=1 in /boot/config.txt
+    become: true
+    ini_file:
+      path: /boot/config.txt
+      section: pi4
+      option: arm_64bit
+      value: 1
+      no_extra_spaces: 1
+
+  - name: Overclock CPU to 2100MHz (over_voltage={{ over_voltage }})
+    become: true
+    ini_file:
+      path: /boot/config.txt
+      section: all
+      option: over_voltage
+      value: "{{ over_voltage }}"
+      no_extra_spaces: 1
+
+  - name: Overclock CPU to {{ arm_freq }} Khz (arm_freq={{ arm_freq }})
+    become: true
+    ini_file:
+      path: /boot/config.txt
+      section: all
+      option: arm_freq
+      value: "{{ arm_freq }}"
+      no_extra_spaces: 1
+      
+  - name: Update Packages
+    become: true
+    apt:
+      update_cache: yes
+      upgrade: yes
+      autoclean: yes
+      autoremove: yes
+      install_recommends: yes
+      state: latest
+      
+  - name: Install Latest EEPROM Firmware
+    become: true
+    apt:
+      pkg:
+        - rpi-eeprom
+        - rpi-eeprom-images
+      state: latest
+    register: eeprom_result
+
+  - name: Reboot after EEPROM update
+    become: true
+    reboot:
+      connect_timeout: 10
+      pre_reboot_delay: 20
+      post_reboot_delay: 10
+      msg: The system will reboot for a kernel upgrade in 20 seconds.  Save your work.
+      reboot_timeout: 300
+      test_command: "uname -a"
+
+  # This also works, but I like the above better.
+  #
+  #- name: Reboot after EEPROM update
+  #  shell: "sleep 5 && reboot"
+  #  async: 1
+  #  poll: 0
+  #  when: eeprom_result is changed
+
+  #- name: Wait for the EEPROM update reboot
+  #  become: true
+  #  wait_for_connection:
+  #    connect_timeout: 20
+  #    sleep: 5
+  #    delay: 5
+  #    timeout: 300
+  #  when: eeprom_result is changed
+  
+  - name: Update to Bleeding Edge Kernel
+    become: true
+    shell: "yes | rpi-update"
+    ignore_errors: yes
+    register: kernel_result
+
+  # This also works, but I like the above better.
+  #
+  #- name: Reboot after Kernel update
+  #  become: true
+  #  shell: "sleep 5 && reboot"
+  #  async: 1
+  #  poll: 0
+  #  when: kernel_result is changed
+
+  #- name: Wait for the Kernel update reboot
+  #  wait_for_connection:
+  #    connect_timeout: 20
+  #    sleep: 10
+  #    delay: 10
+  #    timeout: 300
+  #  when: kernel_result is changed
+
+  - name: Reboot after Kernel update
+    become: true
+    reboot:
+      connect_timeout: 10
+      pre_reboot_delay: 60
+      post_reboot_delay: 10
+      msg: The system will reboot for a kernel upgrade in 60 seconds.  Save your work.
+      reboot_timeout: 90
+      test_command: "uname -a"
+
+  - name: Check kernel version
+    shell: "uname -a"

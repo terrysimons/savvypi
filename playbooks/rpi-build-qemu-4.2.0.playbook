@@ -1,0 +1,330 @@
+---
+- name: Install Raspberry Pi Optimized QEMU
+  hosts: rpi-nodes
+  remote_user: pi
+  become_method: sudo
+  become_user: root
+
+  vars:
+    cc: clang
+    cxx: clang++
+    nproc: 4
+    qemu_version: 4.2.0
+    qemu_tarball_url: https://download.qemu.org/qemu-{{ qemu_version }}.tar.bz2
+    qemu_build_dir: /tmp/qemu-{{ qemu_version }}
+    qemu_build_options: --enable-hax --enable-hvf --enable-tcg-interpreter --enable-jemalloc --enable-plugins
+    qemu_build_targets: --target-list=arm-softmmu,aarch64-softmmu,i386-softmmu
+    qemu_install_prefix: /usr/local
+
+  tasks:
+
+  # Can we do an unless here, in case we're running with other playbooks?
+  - name: Update Packages
+    become: true
+    apt:
+      update_cache: yes
+      upgrade: yes
+      autoclean: yes
+      autoremove: yes
+      install_recommends: yes
+      state: latest
+
+  - name: Prepare QEMU {{ qemu_version }} Build Environment
+    become: true
+    apt:
+      pkg:
+        - build-essential
+        - clang
+        - coreutils
+        - curl
+        - libaio-dev
+        - libbluetooth-dev
+        - libbz2-dev
+        - libcap-dev
+        - libcap-ng-dev
+        - libcurl4-gnutls-dev
+        - libibverbs-dev
+        - libfdt-dev
+        - libglib2.0-dev
+        - libgtk2.0-dev
+        - libgtk-3-dev	
+        - libgtkgl2.0-dev
+        - "libgtkglext*-dev"
+        - libiscsi-dev
+        - libjpeg8-dev
+        - liblzo2-dev
+        - libncurses5-dev
+        - libnfs-dev
+        - libnuma-dev
+        - libpixman-1-dev
+        - librbd-dev
+        - librdmacm-dev
+        - libsasl2-dev
+        - "*libsdl2*"
+        - libseccomp-dev
+        - libsnappy-dev
+        - libssh2-1-dev
+        - libvde-dev
+        - libvdeplug-dev
+        - libxen-dev
+        - "libxt-*"	
+        - lldb
+        - git
+        - git-email
+        - python
+        - python3
+        - qt5-default
+        - strace
+        - sudo
+        - sysfsutils
+        - unzip
+        - valgrind
+        - wget
+        - xfslibs-dev
+        - zlib1g-dev
+      state: latest
+    register: eeprom_result
+
+  - name: Configure OpenGL/Vulkan Support
+    become: true
+    apt:
+      pkg:
+        - "*epoxy*"
+        - "libosmesa*"
+        - "lib*gl*mesa*"
+        - "libgbm*"
+        - "libvulkan1"
+        - "mesa-utils"
+        - "mesa-utils-extra"
+        - "mesa-vulkan-drivers"
+        - "vulkan-utils"
+
+  - name: Install QEMU Base
+    become: true
+    apt:
+      pkg:
+        - aqemu
+        - binutils-dev
+        - "libqcow*"
+        - "libvirt*"
+        - "libvirgl*"
+        - qemu-guest-agent
+        - "qemu-system-*"
+        - qemu-user
+        - sparse
+        - libglib2.0-dev
+        - libfdt-dev
+        - libpixman-1-dev
+        - zlib1g-dev
+        - git-email
+        - libaio-dev
+        - libbluetooth-dev
+        - libbrlapi-dev
+        - libbz2-dev
+        - libcap-dev
+        - libcap-ng-dev
+        - libcurl4-gnutls-dev
+        - libgtk-3-dev
+        - libibverbs-dev
+        - libjpeg8-dev
+        - libncurses5-dev
+        - libnuma-dev
+        - librbd-dev
+        - librdmacm-dev
+        - libsasl2-dev
+        - libseccomp-dev
+        - libsnappy-dev
+        - libssh2-1-dev
+        - libvde-dev
+        - libvdeplug-dev
+        - libxen-dev
+        #- libzo2-dev
+        - valgrind
+        - xfslibs-dev
+        - libnfs-dev
+        - libiscsi-dev
+
+# when ansible_distribution != Raspberry Pi
+#        - grub-firmware-qemu
+
+    # For building new QEMU:
+    # --enable-rdma
+    # https://community.mellanox.com/s/article/howto-enable--verify-and-troubleshoot-rdma#jive_content_id_For_Ubuntu_Installation
+  #- name: Install QEMU --enable-rdma packages
+  #  become: true
+  #  apt:
+  #    pkg:
+  #     - rdma*
+  #     - infiniband-diags
+  #     - "libibumad*"
+  #     - ibverbs-utils
+  #     - tgt
+  #     - targetcli-fb
+  #     - "istgt"
+  #     - open-iscsi
+  #     - "libiscsi*"
+
+# when ansible_distrubtion != Raspberry Pi
+#        - ibutils
+
+  # --enable-membarrier
+  - name: Install QEMU --enable-membarrier packages
+    become: true
+    apt:
+      pkg:
+        - "liburcu*"
+
+  # --enable-spice
+  - name: Install QEMU --enable-spice packages
+    become: true
+    apt:
+      pkg:
+        - "spice-*"
+        - "libspice-*"
+
+  # --enable-smartcard
+  - name: Install QEMU --enable-smartcard packages
+    become: true
+    apt:
+      pkg:
+        - "libcacard*"
+
+  # --enable-libusb
+  - name: Install QEMU --enable-libusb
+    become: true
+    apt:
+      pkg:
+        - "libusb*"
+
+
+  # --enable-gluster
+  - name: Install QEMU --enable-gluster
+    become: true
+    apt:
+      pkg:
+        - "glusterfs*"
+        - "libgfap*"
+        - "libgfchange*"
+        - "libgfrpc*"
+        - "libgfxdr*"
+        - "libgluster*"
+        - "nfs-*gluster"
+        - "uwsgi*gluster*"
+
+  # --enable-libxml2
+  - name: Install QEMU --enable-libxml2
+    become: true
+    apt:
+      pkg:
+        - "libxml2*"
+
+
+  # --enable-jemalloc
+  - name: Install QEMU --enable-jemalloc
+    become: true
+    apt:
+      pkg:
+        - "libjemalloc*"
+
+  # --enable-libpmem
+  - name: Install QEMU --enable-libpmem
+    become: true
+    apt:
+      pkg:
+        - "libpmem*"
+
+  # Other
+  - name: Install QEMU Leftovers
+    become: true
+    apt:
+      pkg:
+        - libcrypt2
+        - libgcrypt20*
+        - libvirt-clients
+        - libvirt-daemon
+        - "libvte-2.91*"
+        - nmap
+        - ncat
+
+  - name: QEMU cross-container dependencies.
+    become: true
+    apt:
+      pkg:
+        - "docker.io*"
+
+  - name: Add Pi user to docker group.
+    become: true
+    shell:
+      cmd: usermod -aG docker pi 
+
+  #- name: Install Docker
+  #  become: true
+  #  shell:
+  #    cmd: curl -sSL https://get.docker.com | sh
+
+
+  - name: Download QEMU {{ qemu_version }} ({{ qemu_tarball_url }})
+    unarchive:
+      src: "{{ qemu_tarball_url }}"
+      remote_src: yes
+      creates: "{{ qemu_build_dir }}"
+      dest: /tmp
+
+# Note:
+# - name: install system updates for centos systems
+#   yum:
+#     name: *
+#     state: latest
+#     update_cache: yes
+#   when: ansible_distribution == "CentOS"
+#
+# - name: install system updates for ubuntu systems
+#   apt:
+#     upgrade: dist
+#     update_cache: yes
+#   when: ansible_distribution == "Ubuntu"
+
+  # This also works, but I like the above better.
+  #
+  # - name: Create QEMU {{ qemu_version }} .
+  #   file:
+  #     path: "{{ qemu_build_dir }}"
+  #     state: directory
+  #
+  # - name: Download QEMU {{ qemu_version }}
+  #   become: true
+  #   get_url:
+  #     dest: /tmp/qemu-{{ qemu_version }}.tar.bz2
+  #     url: "{{ qemu_tarball_url }}"
+
+#  - name: Configure QEMU {{ qemu_version }}
+#    command: ./configure --prefix="{{ qemu_install_prefix }}" --cc="{{ cc }}" --cxx="{{ cxx }}" "{{ qemu_build_options }}"
+#       chdir: "{{ qemu_build_dir }}"
+      # creates: TODO
+
+# This also works, but I like the above better.
+#
+  - name: Configure QEMU "{{ qemu_version }}"
+    shell:
+      chdir: "{{ qemu_build_dir }}"
+      cmd: ./configure --prefix={{ qemu_install_prefix }} --cc={{ cc }} --cxx={{ cxx }} {{ qemu_build_options }} {{ qemu_build_targets }}
+
+  - name: Make QEMU {{ qemu_version }}
+    make:
+      chdir: /tmp/qemu-{{ qemu_version }}
+      params:
+        j: "$(nproc)"
+
+  - name: Install QEMU {{ qemu_version }} to {{ qemu_install_prefix }}
+    become: yes
+    make:
+      chdir: /tmp/qemu-{{ qemu_version }}
+      target: install
+
+#- name: Build 'all' target with extra arguments
+#  make:
+#    chdir: /home/ubuntu/cool-project
+#    target: all
+#    params:
+#      NUM_THREADS: 4
+#      BACKEND: lapack
