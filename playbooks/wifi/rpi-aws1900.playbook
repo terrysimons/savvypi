@@ -1,0 +1,45 @@
+---
+- name: Configure {{ package_name }}
+  hosts: rpi-aws1900-nodes
+  remote_user: pi
+  become_method: sudo
+  become_user: root
+
+  vars:
+    package_name: AWS1900 Driver
+    package_repo: https://github.com/aircrack-ng/rtl8812au
+    package_dir: rtl8812au
+    driver: 88XXau
+
+# TODO:
+# Add MAC address to config.
+
+  tasks:
+
+  - name: Checkout {{ package_name }} Source
+    git:
+      dest: "{{ package_dir }}"
+      repo: "{{ package_repo }}"
+
+  - name: Prepare {{ package_name }} Build Environment
+    become: true
+    apt:
+      pkg:
+        - build-essential
+        - bc
+        - dkms
+        - libelf-dev
+        - raspberrypi-kernel-headers
+	- python*-scapy
+
+  - name: Install {{ package_name }}
+    become: true
+    shell:
+      chdir: "{{ package_dir }}"
+      cmd: ./dkms-install.sh
+
+  - name: Enable {{ package_name }} USB 3 Mode
+    become: true
+    shell:
+      chdir: /etc/modprobe.d
+      cmd: echo "options {{ driver }} rtw_switch_usb_mode=1" > {{ driver }}.conf

@@ -1,0 +1,182 @@
+---
+- name: Install Raspberry Pi Optimized {{ package_name }}
+  hosts: rpi-nodes
+  remote_user: pi
+  become_method: sudo
+  become_user: root
+
+  vars:
+    configure: "LIBRARY_PATH=/usr/local/lib:${LIBRARY_PATH} INCLUDE_PATH=/usr/local/include:${INCLUDE_PATH} cmake"
+    make: make
+    cc: 
+    cxx: 
+    nproc: 4
+    
+    package_name: OpenCV
+    package: opencv
+    package_version: 4.2.0    
+    package_tarball_name: "opencv-{{ package_version }}.tar.gz"
+    package_tarball_url: https://github.com/opencv/opencv/archive/{{ package_tarball_name }}
+    package_tarball: "{{ package_tarball_name }}"
+    package_tarball_location: versions/{{ package_version }}/{{ package_tarball_name }}
+
+    package_contrib_name: OpenCV Contrib
+    package_contrib: opencv_contrib    
+    package_contrib_version: "{{ package_version }}"
+    package_contrib_tarball_name: "opencv_contrib-{{ package_contrib_version }}.tar.gz"
+    package_contrib_tarball_url: https://github.com/opencv/opencv_contrib/archive/{{ package_contrib_tarball_name }}
+    package_contrib_tarball: "{{ package_contrib_tarball_name }}"
+    package_contrib_tarball_location: versions/{{ package_version }}/{{ package_contrib_tarball_name }}
+
+    package_build_root: /home/pi
+    package_src_dir: "{{ package_build_root }}/{{ package }}-{{ package_version }}"
+    package_build_dir: "{{ package_src_dir }}/build"
+
+    package_contrib_build_root: /home/pi
+    package_contrib_src_dir: "{{ package_contrib_build_root }}/{{ package_contrib }}-{{ package_version }}"
+
+    package_build_options: "-G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS='-I/usr/local/include -std=c++11' -DCMAKE_C_FLAGS='-I /usr/local/include -std=c11' -DENABLE_VFPV3=ON -DENABLE_NEON=ON -DWITH_TBB=ON -DOPENCV_EXTRA_MODULES_PATH={{ package_contrib_src_dir }}/modules .."
+
+    remote_src: no
+
+  tasks:
+
+  - name: Update Packages
+    become: true
+    apt:
+      update_cache: yes
+      upgrade: yes
+      autoclean: yes
+      autoremove: yes
+      install_recommends: yes
+      state: latest
+
+  - name: Prepare {{ package_name }} {{ package_version }} Build Environment
+    become: true
+    apt:
+      pkg:
+        - libavcodec-dev
+        - libavfilter-dev
+        - libavresample-dev
+        - libswscale-dev
+        - "libavdevice*"
+        - libavfilter7
+        - "libavformat*"
+        - "libavutil*"
+        - "libdc1394*"
+        - "libffmpegthumbnailer*"
+        - "libffms*"
+        - "libgstreamer*"
+        - libjpeg-dev
+        - "libpostproc*"
+        - "libswresample*"
+        - "libtiff*"
+        - "libxine*"
+        - pngtools
+        - python-libtiff
+        - "libjasper*"
+        - ttf-aenigma
+        - "libopenblas*"
+        - liblapack-dev
+        - liblapack3
+        - liblapacke
+        - liblapacke-dev
+        - "liblapack*"
+        - ccache
+        - "libatlas-*"
+        - "libharfbuzz*"
+        - "libhdf5*"
+        - "libogre-1.9*"
+        - "ogre-1.9*"
+        - "libeigen*"
+        - "libgflags*"
+        - "python*-gflags"
+        - "python*-google-apputils"
+        - "caffe-*"
+        - "libcaffe*"
+        - "*protobuf*"
+        - "libprotoc*"
+        - "libprotozero*"
+        - "libgoogle-glog*"
+        - "liblept*"
+        - "tesseract-ocr-[a-c]*"
+        - tesseract-ocr-dan
+        - tesseract-ocr-deu
+        - tesseract-ocr-deu-frak
+        - tesseract-ocr-div
+        - "tesseract-ocr-[e-f]*"
+        - tesseract-ocr-gla
+        - tesseract-ocr-gle
+        - tesseract-ocr-glg
+        - tesseract-ocr-grc
+        - tesseract-ocr-guj
+        - "tesseract-ocr-[h-j]*"
+        - tesseract-ocr-kan
+        - "tesseract-ocr-kat"
+        - "tesseract-ocr-kat-old"
+        - "tesseract-ocr-kaz"
+        - "tesseract-ocr-khm"
+        - tesseract-ocr-kir
+        - tesseract-ocr-kmr
+        - tesseract-ocr-kor
+        - tesseract-ocr-kor-vert
+        - "tesseract-ocr-[l-z]*"
+        - libtesseract4
+        - libtesseract-dev
+        - "*-pyocr"
+        - tesseract-ocr
+        - "libgtk-3*"
+        - "libgtkgl*"
+        - "libgtkglext*-dev"
+        - "libgl1*"
+        - "libxt-*"
+        - "libosmesa*"
+        - "libatlas-base-dev"
+        - raspberrypi-kernel-headers
+        - "*gtkgl*"
+        - "ninja-build"
+        - "libv4l-dev"
+        - "libwebcam0-dev"
+        - "libzvbi-dev"
+      state: latest
+
+#  - name: Download {{ package_name }} {{ package_version }} ({{ package_tarball }})
+#    unarchive:
+#      src: "{{ package_tarball_location }}"
+#      remote_src: "{{ remote_src }}"
+#      creates: "{{ package_build_dir }}"
+#      dest: "{{ package_build_root }}"
+
+#  - name: Download {{ package_contrib_name }} {{ package_contrib_version }} ({{ package_contrib_tarball }})
+#    unarchive:
+#      src: "{{ package_contrib_tarball_location }}"
+#      remote_src: "{{ remote_src }}"
+#      creates: "{{ package_contrib_src_dir }}"
+#      dest: "{{ package_contrib_build_root }}"
+
+  - name: Create {{ package_name }} version {{ package_version }} build directory.
+    shell:
+      chdir: "{{ package_build_root }}/{{ package }}-{{package_version}}"
+      cmd: mkdir build
+
+  - name: "Configure {{ package_name }} {{ package_version }}"
+    shell:
+      chdir: "{{ package_build_dir }}"
+      cmd: "CC={{ cc }} CXX={{ cxx }} {{ configure }} {{ package_build_options }}"
+
+  - name: "Build {{ package_name }} {{ package_version }}"
+    shell:
+      chdir: "{{ package_build_dir }}"
+      cmd: "ninja"
+
+#  - name: "Make {{ package_name }} {{ package_version }}"
+#    make:
+#      chdir: "{{ package_build_dir }}"
+#      params:
+#        j: $(nproc)
+
+  - name: "Install {{ package_name }} {{ package_version }} to {{ package_install_prefix }}"
+    become: yes
+    make:
+      chdir: "{{ package_build_dir }}"
+      target: install

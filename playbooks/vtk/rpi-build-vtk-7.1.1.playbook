@@ -1,0 +1,220 @@
+---
+- name: Install Raspberry Pi Optimized {{ package_name }}
+  hosts: rpi-nodes
+  remote_user: pi
+  become_method: sudo
+  become_user: root
+
+  vars:
+    configure: cmake
+    make: make
+    cc: clang
+    cxx: clang++
+    nproc: 4
+    package_name: VTK
+    package: VTK
+    package_data: VTKData
+    package_large_data: VTKLargeData
+    package_docs: vtkDocHtml
+    package_major_version: 7
+    package_minor_version: 1
+    package_patch_version: 1
+    package_major_minor_version: "{{ package_major_version }}.{{ package_minor_version }}"
+    package_version: "{{ package_major_minor_version }}.{{ package_patch_version }}"
+
+    package_tarball_name: "{{ package }}-{{ package_version }}.tar.gz"
+    package_tarball_url: https://www.vtk.org/files/release/{{ package_major_minor_version }}/{{ package_tarball_name }}
+    package_tarball: "{{ package_tarball_name }}"
+    package_tarball_location: versions/{{ package_version }}/{{ package_tarball_name }}
+
+    package_data_name: "{{ package_data }}-{{ package_version }}.tar.gz"
+    package_data_url: https://www.vtk.org/files/release/{{ package_major_minor_version}}/{{ package_data_name }}
+    package_data_tarball: "{{ package_data_name }}"
+    package_data_tarball_location: versions/{{ package_version }}/{{ package_data_name }}
+
+    package_large_data_name: "{{ package_large_data }}-{{ package_version }}.tar.gz"
+    package_large_data_url: https://www.vtk.org/files/release/{{ package_major_minor_version }}/{{ package_large_data_name }}
+    package_large_data_tarball: "{{ package_large_data_name }}"
+    package_large_data_tarball_location: versions/{{ package_version }}/{{ package_large_data_name }}
+
+    package_build_options: "-DCMAKE_BUILD_TYPE=RELEASE -DBUILD_EXAMPLES=ON -DBUILD_TESTING=ON -DVTK_WRAP_PYTHON=ON -DVTK_Group_Imaging=ON -DVTK_Group_Qt=ON -DVTK_Group_MPI=ON -DVTK_Group_Rendering=ON -DVTK_Group_StandAlone=ON -DVTK_Group_Tk=ON -DVTK_Group_Views=ON -DVTK_Group_Web=ON -DVTK_PYTHON_VERSION=2 -DVTK_QT_VERSION=4 -DVTK_USE_PYTHON=ON -DVTK_USE_JAVA=ON -DVTK_USE_TK=ON -DVTK_USE_LARGE_DATA=ON -DOpenGL_GL_PREFERENCE=GLVND .."
+    package_build_targets:
+    package_build_root: /home/pi    
+    package_src_dir: "{{ package_build_root }}/{{ package }}-{{ package_version }}"
+    package_build_dir: "{{ package_src_dir }}/build"
+
+    # "no" instructs ansible to use local files.
+    # "yes" instructs ansible to download packages.
+    remote_src: no
+
+  tasks:
+
+  - name: Prepare {{ package_name }} {{ package_version }} Build Environment
+    become: true
+    apt:
+      pkg:
+        - build-essential
+        - clang
+        - cmake
+        - cmake-curses-gui
+        - cmake-doc
+        - coreutils
+        - curl
+        - libaio-dev
+        - libbluetooth-dev
+        - libbz2-dev
+        - libcap-dev
+        - libcap-ng-dev
+        - libcurl4-gnutls-dev
+        - libibverbs-dev
+        - libfdt-dev
+        - libglib2.0-dev
+        - libgtk2.0-dev
+        - libgtk-3-dev	
+        - libgtkgl2.0-dev
+        - "libgtkglext*-dev"
+        - libiscsi-dev
+        - libjpeg8-dev
+        - liblzo2-dev
+        - libncurses5-dev
+        - libnfs-dev
+        - libnuma-dev
+        - libpixman-1-dev
+        - librbd-dev
+        - librdmacm-dev
+        - libsasl2-dev
+        - "*libsdl2*"
+        - libseccomp-dev
+        - libsnappy-dev
+        - libssh2-1-dev
+        - libvde-dev
+        - libvdeplug-dev
+        - libvisp-dev
+        - libvisp-doc
+        - libxen-dev
+        - "libxt-*"	
+        - lldb
+        - git
+        - git-email
+        - python
+        - python3
+        - qt5-default
+        - strace
+        - sudo
+        - sysfsutils
+        - unzip
+        - valgrind
+        - wget
+        - xfslibs-dev
+        - zlib1g-dev
+      state: latest
+    register: eeprom_result
+
+  - name: Configure OpenGL/Vulkan Support
+    become: true
+    apt:
+      pkg:
+        - "*epoxy*"
+        - "libosmesa*"
+        - "lib*gl*mesa*"
+        - "libgbm*"
+        - "libvulkan1"
+        - "mesa-utils"
+        - "mesa-utils-extra"
+        - "mesa-vulkan-drivers"
+        - "vulkan-utils"
+
+  - name: Install {{ package_name }} Base
+    become: true
+    apt:
+      pkg:
+        - binutils-dev
+        - "libvirgl*"
+        - sparse
+        - libglib2.0-dev
+        - libfdt-dev
+        - libpixman-1-dev
+        - zlib1g-dev
+        - git-email
+        - libaio-dev
+        - libbluetooth-dev
+        - libbrlapi-dev
+        - libbz2-dev
+        - libcap-dev
+        - libcap-ng-dev
+        - libcurl4-gnutls-dev
+        - libgtk-3-dev
+        - libibverbs-dev
+        - libjpeg8-dev
+        - libncurses5-dev
+        - libnuma-dev
+        - librbd-dev
+        - librdmacm-dev
+        - libsasl2-dev
+        - libseccomp-dev
+        - libsnappy-dev
+        - libssh2-1-dev
+        - libvde-dev
+        - libvdeplug-dev
+        - libxen-dev
+        - "qttools*"
+        - "libqt5*"
+        - "python*-pyqt5*"
+        - "libpythonqt-qt5-python*-dev"
+        - "libpython*-all-dev"
+        - "libpythonqt-qtall-qt5-python*-dev"
+        - "python*-all-dev"
+        - "python*-cxx-dev"
+        - "python*-dbus-dev"
+        - "python*-easydev"
+        - "doxygen-*"
+        - "khronos-api"
+        - libsoil-dev
+        - libglfw3-dev
+        - "qt4-*"
+        - tk8.6-dev
+
+  - name: Download {{ package_name }} {{ package_version }} ({{ package_tarball }})
+    unarchive:
+      src: "{{ package_tarball_location }}"
+      remote_src: "{{ remote_src }}"
+      creates: "{{ package_build_dir }}"
+      dest: "{{ package_build_root }}"
+
+  - name: Download {{ package_name }} Data {{ package_version }} ({{ package_data_tarball }})
+    unarchive:
+      src: "{{ package_data_tarball_location }}"
+      remote_src: "{{ remote_src }}"
+      creates: "{{ package_build_root }}/{{ package_data }}-{{ package_version }}"
+      dest: "{{ package_build_root }}"
+
+  - name: Download {{ package_name }} Large Data {{ package_version }} ({{ package_large_data_tarball }})
+    unarchive:
+      src: "{{ package_large_data_tarball_location }}"
+      remote_src: "{{ remote_src }}"
+      creates: "{{ package_build_root }}/{{ package_large_data }}-{{ package_version }}"
+      dest: "{{ package_build_root }}"
+
+  - name: Create {{ package_name }} version {{ package_version }} build directory.
+    shell:
+      chdir: "{{ package_build_root }}/{{ package }}-{{package_version}}"
+      cmd: mkdir build
+
+  - name: "Configure {{ package_name }} {{ package_version }}"
+    shell:
+      chdir: "{{ package_build_dir }}"
+      cmd: "CC={{ cc }} CXX={{ cxx }} {{ configure }} {{ package_build_options }}"
+    ignore_errors: yes
+
+  - name: "Make {{ package_name }} {{ package_version }}"
+    make:
+      chdir: "{{ package_build_dir }}"
+      params:
+        j: $(nproc)
+
+  - name: "Install {{ package_name }} {{ package_version }} to {{ package_install_prefix }}"
+    become: yes
+    make:
+      chdir: "{{ package_build_dir }}"
+      target: install
+

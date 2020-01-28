@@ -1,5 +1,5 @@
 ---
-- name: Install Raspberry Pi Optimized QEMU
+- name: Install Raspberry Pi Optimized {{ package_name }}
   hosts: rpi-nodes
   remote_user: pi
   become_method: sudo
@@ -9,12 +9,18 @@
     cc: clang
     cxx: clang++
     nproc: 4
-    qemu_version: 4.2.0
-    qemu_tarball_url: https://download.qemu.org/qemu-{{ qemu_version }}.tar.bz2
-    qemu_build_dir: /tmp/qemu-{{ qemu_version }}
-    qemu_build_options: --enable-hax --enable-hvf --enable-tcg-interpreter --enable-jemalloc --enable-plugins
-    qemu_build_targets: --target-list=arm-softmmu,aarch64-softmmu,i386-softmmu
-    qemu_install_prefix: /usr/local
+    package_name: QEMU
+    package: qemu
+    package_major_version: 4
+    package_minor_version: 2
+    package_patch_version: 0
+    package_version: "{{ package_major_version }}.{{ package_minor_version }}.{{ package_patch_version }}"
+    package_tarball_url: https://download.qemu.org/{{ package }}-{{ package_version }}.tar.bz2
+    package_build_root: ${HOME}
+    package_build_dir: "{{ package_build_root }}/{{ package }}-{{ package_version }}"
+    package_build_options: --enable-hax --enable-hvf --enable-tcg-interpreter --enable-jemalloc --enable-plugins
+    package_build_targets: --target-list=arm-softmmu,aarch64-softmmu,i386-softmmu
+    package_install_prefix: /usr/local
 
   tasks:
 
@@ -29,7 +35,7 @@
       install_recommends: yes
       state: latest
 
-  - name: Prepare QEMU {{ qemu_version }} Build Environment
+  - name: Prepare {{ package_name }} {{ package_version }} Build Environment
     become: true
     apt:
       pkg:
@@ -99,7 +105,7 @@
         - "mesa-vulkan-drivers"
         - "vulkan-utils"
 
-  - name: Install QEMU Base
+  - name: Install {{ package_name }} Base
     become: true
     apt:
       pkg:
@@ -168,14 +174,14 @@
 #        - ibutils
 
   # --enable-membarrier
-  - name: Install QEMU --enable-membarrier packages
+  - name: Install {{ package_name }} --enable-membarrier packages
     become: true
     apt:
       pkg:
         - "liburcu*"
 
   # --enable-spice
-  - name: Install QEMU --enable-spice packages
+  - name: Install {{ package_name }} --enable-spice packages
     become: true
     apt:
       pkg:
@@ -183,14 +189,14 @@
         - "libspice-*"
 
   # --enable-smartcard
-  - name: Install QEMU --enable-smartcard packages
+  - name: Install {{ package_name }} --enable-smartcard packages
     become: true
     apt:
       pkg:
         - "libcacard*"
 
   # --enable-libusb
-  - name: Install QEMU --enable-libusb
+  - name: Install {{ package_name }} --enable-libusb
     become: true
     apt:
       pkg:
@@ -198,7 +204,7 @@
 
 
   # --enable-gluster
-  - name: Install QEMU --enable-gluster
+  - name: Install {{ package_name }} --enable-gluster
     become: true
     apt:
       pkg:
@@ -212,7 +218,7 @@
         - "uwsgi*gluster*"
 
   # --enable-libxml2
-  - name: Install QEMU --enable-libxml2
+  - name: Install {{ package_name }} --enable-libxml2
     become: true
     apt:
       pkg:
@@ -220,21 +226,21 @@
 
 
   # --enable-jemalloc
-  - name: Install QEMU --enable-jemalloc
+  - name: Install {{ package_name }} --enable-jemalloc
     become: true
     apt:
       pkg:
         - "libjemalloc*"
 
   # --enable-libpmem
-  - name: Install QEMU --enable-libpmem
+  - name: Install {{ package_name }} --enable-libpmem
     become: true
     apt:
       pkg:
         - "libpmem*"
 
   # Other
-  - name: Install QEMU Leftovers
+  - name: Install {{ package_name }} Leftovers
     become: true
     apt:
       pkg:
@@ -246,7 +252,7 @@
         - nmap
         - ncat
 
-  - name: QEMU cross-container dependencies.
+  - name: "{{ package_name }} cross-container dependencies."
     become: true
     apt:
       pkg:
@@ -262,13 +268,12 @@
   #  shell:
   #    cmd: curl -sSL https://get.docker.com | sh
 
-
-  - name: Download QEMU {{ qemu_version }} ({{ qemu_tarball_url }})
+  - name: Download {{ package_name }} {{ package_version }} ({{ package_tarball_url }})
     unarchive:
-      src: "{{ qemu_tarball_url }}"
+      src: "{{ package_tarball_url }}"
       remote_src: yes
-      creates: "{{ qemu_build_dir }}"
-      dest: /tmp
+      creates: "{{  package_build_dir }}"
+      dest: "{{ package_build_root }}"
 
 # Note:
 # - name: install system updates for centos systems
@@ -286,39 +291,39 @@
 
   # This also works, but I like the above better.
   #
-  # - name: Create QEMU {{ qemu_version }} .
+  # - name: Create {{ package_name }} {{ package_version }} .
   #   file:
-  #     path: "{{ qemu_build_dir }}"
+  #     path: "{{  package_build_dir }}"
   #     state: directory
   #
-  # - name: Download QEMU {{ qemu_version }}
+  # - name: Download {{ package_name }} {{ package_version }}
   #   become: true
   #   get_url:
-  #     dest: /tmp/qemu-{{ qemu_version }}.tar.bz2
-  #     url: "{{ qemu_tarball_url }}"
+  #     dest: /tmp/qemu-{{ package_version }}.tar.bz2
+  #     url: "{{  package }}_tarball_url }}"
 
-#  - name: Configure QEMU {{ qemu_version }}
-#    command: ./configure --prefix="{{ qemu_install_prefix }}" --cc="{{ cc }}" --cxx="{{ cxx }}" "{{ qemu_build_options }}"
-#       chdir: "{{ qemu_build_dir }}"
+#  - name: Configure {{ package_name }} {{ package_version }}
+#    command: ./configure --prefix="{{ package_install_prefix }}" --cc="{{ cc }}" --cxx="{{ cxx }}" "{{  package }}_build_options }}"
+#       chdir: "{{  package_build_dir }}"
       # creates: TODO
 
 # This also works, but I like the above better.
 #
-  - name: Configure QEMU "{{ qemu_version }}"
+  - name: Configure {{ package_name }} "{{ package_version }}"
     shell:
-      chdir: "{{ qemu_build_dir }}"
-      cmd: ./configure --prefix={{ qemu_install_prefix }} --cc={{ cc }} --cxx={{ cxx }} {{ qemu_build_options }} {{ qemu_build_targets }}
+      chdir: "{{  package_build_dir }}"
+      cmd: ./configure --prefix={{ package_install_prefix }} --cc={{ cc }} --cxx={{ cxx }} {{ package_build_options }} {{  package_build_targets }}
 
-  - name: Make QEMU {{ qemu_version }}
+  - name: Make {{ package_name }} {{ package_version }}
     make:
-      chdir: /tmp/qemu-{{ qemu_version }}
+      chdir: "{{ package_build_dir }}"
       params:
         j: "$(nproc)"
 
-  - name: Install QEMU {{ qemu_version }} to {{ qemu_install_prefix }}
+  - name: Install {{ package_name }} {{ package_version }} to {{ package_install_prefix }}
     become: yes
     make:
-      chdir: /tmp/qemu-{{ qemu_version }}
+      chdir: "{{ package_build_dir }}"
       target: install
 
 #- name: Build 'all' target with extra arguments

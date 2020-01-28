@@ -8,3 +8,6 @@ node01.local
 
 [rpi-fanshim-nodes]
 node01.local
+
+[rpi-aws1900-nodes]
+node01.local
