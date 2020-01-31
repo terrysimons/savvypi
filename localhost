@@ -3,16 +3,14 @@ localhost
 [all]
 localhost
 
-node01.local
-
 [rpi4-aarch64-nodes]
-node01.local
+localhost
 
 [rpi-nodes]
-node01.local
+localhost
 
 [rpi-fanshim-nodes]
-node01.local
+localhost
 
 [rpi-aws1900-nodes]
-node01.local
+localhost

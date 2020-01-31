@@ -30,7 +30,13 @@
         - dkms
         - libelf-dev
         - raspberrypi-kernel-headers
-	- python*-scapy
+        - "python*-scapy"
+        - tcpdump
+        - aircrack-ng
+        - airgraph-ng
+        - wireshark
+        - iperf
+        - iperf3
 
   - name: Install {{ package_name }}
     become: true
