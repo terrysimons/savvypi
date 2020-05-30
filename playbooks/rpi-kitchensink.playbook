@@ -1,0 +1,5 @@
+- import_playbook: rpi-setup.playbook
+- import_playbook: rpi4-64-bit-kernel.playbook
+- import_playbook: rpi-fanshim.playbook
+- import_playbook: rpi-build-qemu-4.2.0.playbook
+- import_playbook: vtk/rpi-build-vtk-7.1.1.playbook
